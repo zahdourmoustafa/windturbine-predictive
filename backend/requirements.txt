@@ -1,0 +1,16 @@
+# Add your project dependencies here, for example:
+Flask
+Flask-CORS
+numpy
+pandas
+scikit-learn
+matplotlib
+# tensorflow # Commenting out as it might not be directly used by the API, can be added back if needed.
+scipy
+torch
+termcolor
+tabulate
+# Add other packages as needed
+fastapi
+uvicorn[standard]
+python-multipart
