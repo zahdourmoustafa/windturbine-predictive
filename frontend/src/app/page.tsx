@@ -2,6 +2,9 @@
 
 import { useState, ChangeEvent, FormEvent } from "react";
 import { AlertCircle, CheckCircle2, Loader2, UploadCloud } from "lucide-react";
+import { ConfusionMatrixHeatmap } from "@/components/ConfusionMatrixHeatmap";
+import { SensorF1ScoreBarChart } from "@/components/SensorF1ScoreBarChart";
+import { PredictionConfidenceChart } from "@/components/PredictionConfidenceChart";
 
 // Assuming shadcn/ui components are available. If not, you'll need to add them:
 // npx shadcn-ui@latest add card button input table alert progress
@@ -243,42 +246,62 @@ export default function HomePage() {
               <h3 className="text-lg font-semibold mb-2">
                 Overall File Prediction
               </h3>
-              <Alert
-                variant={
-                  prediction.file_level_prediction === "FAULTY"
-                    ? "destructive"
-                    : "default"
-                }
-                className={
-                  prediction.file_level_prediction === "HEALTHY"
-                    ? "bg-green-50 border-green-300 text-green-700"
-                    : ""
-                }
-              >
-                <AlertTitle className="font-bold text-xl">
-                  {prediction.file_level_prediction || "N/A"}
-                </AlertTitle>
-                <AlertDescription>
-                  {prediction.file_level_prediction === "FAULTY"
-                    ? `Average fault probability: ${(
-                        (prediction.avg_overall_fault_probability_for_file ||
-                          0) * 100
-                      ).toFixed(1)}%`
-                    : `Confidence for Healthy State: ${(
-                        (1.0 -
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Alert
+                    variant={
+                      prediction.file_level_prediction === "FAULTY"
+                        ? "destructive"
+                        : "default"
+                    }
+                    className={
+                      prediction.file_level_prediction === "HEALTHY"
+                        ? "bg-green-50 border-green-300 text-green-700"
+                        : ""
+                    }
+                  >
+                    <AlertTitle className="font-bold text-xl">
+                      {prediction.file_level_prediction || "N/A"}
+                    </AlertTitle>
+                    <AlertDescription>
+                      {prediction.file_level_prediction === "FAULTY"
+                        ? `Average fault probability: ${(
+                            (prediction.avg_overall_fault_probability_for_file ||
+                              0) * 100
+                          ).toFixed(1)}%`
+                        : `Confidence for Healthy State: ${(
+                            (1.0 -
+                              (prediction.avg_overall_fault_probability_for_file ||
+                                0)) *
+                            100
+                          ).toFixed(1)}%`}
+                      {prediction.was_healthy_override_applied && (
+                        <span className="block text-sm font-medium">
+                          {" "}
+                          (Note: Overall status was overridden to HEALTHY based
+                          on sensor health analysis)
+                        </span>
+                      )}
+                    </AlertDescription>
+                  </Alert>
+                </div>
+                <div>
+                  <PredictionConfidenceChart
+                    confidence={
+                      prediction.file_level_prediction === "FAULTY"
+                        ? prediction.avg_overall_fault_probability_for_file || 0
+                        : 1.0 -
                           (prediction.avg_overall_fault_probability_for_file ||
-                            0)) *
-                        100
-                      ).toFixed(1)}%`}
-                  {prediction.was_healthy_override_applied && (
-                    <span className="block text-sm font-medium">
-                      {" "}
-                      (Note: Overall status was overridden to HEALTHY based on
-                      sensor health analysis)
-                    </span>
-                  )}
-                </AlertDescription>
-              </Alert>
+                            0)
+                    }
+                    title={
+                      prediction.file_level_prediction === "FAULTY"
+                        ? "Fault Confidence"
+                        : "Healthy State Confidence"
+                    }
+                  />
+                </div>
+              </div>
             </section>
 
             {/* Per-Sensor Diagnosis Table Section */}
@@ -364,11 +387,17 @@ export default function HomePage() {
                         "N/A"}
                     </p>
                     {prediction.overall_detection_metrics.confusion_matrix && (
-                      <div className="mt-2">
-                        <p className="font-medium">
+                      <div className="mt-4">
+                        <p className="font-medium mb-2">
                           Confusion Matrix (GT vs Pred):
                         </p>
-                        <pre className="bg-gray-100 p-2 rounded-md text-sm">
+                        <ConfusionMatrixHeatmap
+                          confusionMatrix={
+                            prediction.overall_detection_metrics
+                              .confusion_matrix
+                          }
+                        />
+                        <pre className="bg-gray-100 p-2 rounded-md text-sm mt-3">
                           {`  Predicted:   Healthy  Faulty
 Actual Healthy: [[${prediction.overall_detection_metrics.confusion_matrix[0][0]},      ${prediction.overall_detection_metrics.confusion_matrix[0][1]}],
 Actual Faulty:   [${prediction.overall_detection_metrics.confusion_matrix[1][0]},      ${prediction.overall_detection_metrics.confusion_matrix[1][1]}]]`}
@@ -383,13 +412,18 @@ Actual Faulty:   [${prediction.overall_detection_metrics.confusion_matrix[1][0]}
                       <h4 className="text-md font-semibold mb-1">
                         Per-Sensor F1 Scores:
                       </h4>
-                      {Object.entries(prediction.per_sensor_f1_scores).map(
-                        ([sensor, f1]) => (
-                          <p key={sensor}>
-                            {sensor}: {f1.toFixed(4)}
-                          </p>
-                        )
-                      )}
+                      <SensorF1ScoreBarChart
+                        sensorScores={prediction.per_sensor_f1_scores}
+                      />
+                      <div className="mt-3 text-sm">
+                        {Object.entries(prediction.per_sensor_f1_scores).map(
+                          ([sensor, f1]) => (
+                            <span key={sensor} className="inline-block mr-3">
+                              {sensor}: {f1.toFixed(4)}
+                            </span>
+                          )
+                        )}
+                      </div>
                       {prediction.average_per_sensor_f1 && (
                         <p className="font-semibold mt-1">
                           Average Per-Sensor F1:{" "}

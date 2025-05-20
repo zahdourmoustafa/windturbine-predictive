@@ -19,6 +19,7 @@ try:
     # or main.py can define the list of clients to initialize for the server.
     # For clarity, let's get it from preprocess.py here to define which clients participate.
     from src.data_processing.preprocess import CLIENT_DATA_SOURCES # Defined in your latest preprocess.py
+    from api_v1 import prediction_endpoints  # Import the prediction endpoints router
 except ModuleNotFoundError as e:
     print(f"ERROR: Could not import project modules in main.py. Ensure script is run from project root or PYTHONPATH is set.")
     print(f"Details: {e}")
@@ -119,8 +120,8 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
     allow_credentials=True,
-    allow_methods=["*"]_,
-    allow_headers=["*"]_,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 # Include the prediction API router

@@ -1,7 +1,5 @@
 # Data directories
-data/
-raw_data/
-output/
+data/raw
 __pycache__/
 # Images and media files
 *.png
@@ -17,7 +15,8 @@ __pycache__/
 *.gz
 *.rar
 *.7z
-
+data/
+output/
 
 
 # Cache and temporary files
